@@ -9,9 +9,10 @@ import ProductFilter from "./ProductFilter";
 
 interface ProductListProps {
   products: Product[];
+  productTypes?: Record<string, { label: string; benefits: { title: string; description: string }[] }>;
 }
 
-export default function ProductList({ products }: ProductListProps) {
+export default function ProductList({ products, productTypes }: ProductListProps) {
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState("");
 
@@ -21,11 +22,11 @@ export default function ProductList({ products }: ProductListProps) {
     for (const p of products) {
       if (!seen.has(p.type)) {
         seen.add(p.type);
-        options.push({ value: p.type, label: getProductTheme(p.type).label });
+        options.push({ value: p.type, label: getProductTheme(p.type, productTypes).label });
       }
     }
     return options;
-  }, [products]);
+  }, [products, productTypes]);
 
   const debouncedSearch = useDebounce(search);
 

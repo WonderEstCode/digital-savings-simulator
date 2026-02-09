@@ -18,11 +18,11 @@ export class ProductTypesService {
     return this.types;
   }
 
-  create(key: string, type: ProductType): ProductType {
+  async create(key: string, type: ProductType): Promise<ProductType> {
     if (this.types[key]) throw new ConflictException(`Type "${key}" already exists`);
 
     this.types[key] = type;
-    this.triggerRevalidation();
+    await this.triggerRevalidation();
     return type;
   }
 

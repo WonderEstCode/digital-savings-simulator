@@ -1,8 +1,11 @@
 import ProductList from "@/components/products/ProductList";
-import { getProducts } from "@/lib/api";
+import { getProducts, getProductTypes } from "@/lib/api";
 
 export default async function ProductsPage() {
-  const data = await getProducts();
+  const [data, productTypes] = await Promise.all([
+    getProducts(),
+    getProductTypes(),
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -15,7 +18,7 @@ export default async function ProductsPage() {
       </p>
 
       <div className="mt-8">
-        <ProductList products={data} />
+        <ProductList products={data} productTypes={productTypes} />
       </div>
     </div>
   );

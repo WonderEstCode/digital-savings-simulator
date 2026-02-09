@@ -12,7 +12,7 @@ export class ProductsController {
   }
 
   @Post()
-  create(@Body() body: ProductDto): ProductDto {
+  create(@Body() body: ProductDto): Promise<ProductDto> {
     return this.productsService.create(body);
   }
 
@@ -25,7 +25,7 @@ export class ProductsController {
   update(
     @Param('slug') slug: string,
     @Body() body: Partial<ProductDto>,
-  ): ProductDto {
+  ): Promise<ProductDto> {
     return this.productsService.update(slug, body);
   }
 }

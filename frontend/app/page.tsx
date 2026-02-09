@@ -163,40 +163,69 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="relative mx-auto max-w-3xl">
-          <div className="space-y-20 relative z-10">
+        <div className="relative mx-auto max-w-5xl">
+          <div className="hidden lg:block absolute left-1/2 top-12 bottom-12 w-px -translate-x-1/2 bg-gradient-to-b from-blue-200 via-green-200 to-amber-200" />
+
+          <div className="space-y-16 lg:space-y-24 relative z-10">
             {steps.map((step, idx) => {
               const Icon = step.icon;
-              const bgColors = [
+              const isEven = idx % 2 === 0;
+              const numberColors = [
+                "text-blue-100",
+                "text-green-100",
+                "text-amber-100",
+              ];
+              const iconBgColors = [
                 "from-blue-50 to-blue-100",
                 "from-green-50 to-green-100",
                 "from-amber-50 to-amber-100",
+              ];
+              const numberAccentColors = [
+                "text-blue-300",
+                "text-green-300",
+                "text-amber-300",
               ];
 
               return (
                 <Link
                   key={step.href}
                   href={step.href}
-                  className="group relative flex flex-col items-center text-center"
+                  className={`group relative flex flex-col items-center text-center lg:grid lg:grid-cols-2 lg:items-center lg:gap-16 lg:text-left`}
                 >
-                  <div
-                    className={`relative flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br ${bgColors[idx]} shadow-lg transition-all group-hover:-translate-y-2 group-hover:scale-110 group-hover:shadow-2xl`}
-                  >
-                    <Icon className="h-10 w-10 text-caja-blue-dark" />
-                    <span className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-caja-blue-dark text-xs font-bold text-white shadow-lg">
-                      {step.number}
-                    </span>
+                  {/* Mobile: stacked layout */}
+                  {/* Desktop: zigzag - even rows: content left + number right, odd rows: number left + content right */}
+
+                  <div className={`${isEven ? "lg:order-1" : "lg:order-2"}`}>
+                    <div className="relative inline-flex items-center gap-4 lg:gap-6">
+                      <span className={`hidden lg:block text-[8rem] xl:text-[10rem] font-black leading-none ${numberColors[idx]} select-none transition-all group-hover:scale-105`}>
+                        {step.number}
+                      </span>
+                      <div
+                        className={`relative flex h-20 w-20 lg:h-24 lg:w-24 items-center justify-center rounded-2xl bg-gradient-to-br ${iconBgColors[idx]} shadow-lg transition-all group-hover:-translate-y-2 group-hover:scale-110 group-hover:shadow-2xl`}
+                      >
+                        <Icon className="h-9 w-9 lg:h-10 lg:w-10 text-caja-blue-dark" />
+                        <span className="lg:hidden absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-caja-blue-dark text-xs font-bold text-white shadow-lg">
+                          {step.number}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="mt-6">
-                    <h3 className="text-xl font-bold text-slate-800">
+                  <div className={`mt-6 lg:mt-0 ${isEven ? "lg:order-2" : "lg:order-1 lg:text-right"}`}>
+                    <span className={`hidden lg:block text-sm font-bold uppercase tracking-widest ${numberAccentColors[idx]} mb-2`}>
+                      Paso {step.number}
+                    </span>
+                    <h3 className="text-xl lg:text-2xl font-bold text-slate-800">
                       {step.title}
                     </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600 max-w-sm">
+                    <p className="mt-2 text-sm lg:text-base leading-relaxed text-slate-600 max-w-sm lg:max-w-md mx-auto lg:mx-0">
                       {step.description}
                     </p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-caja-blue-bright transition-colors group-hover:text-caja-blue-dark">
-                      {step.label} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <span className={`mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-caja-blue-bright transition-colors group-hover:text-caja-blue-dark ${!isEven ? "lg:flex-row-reverse" : ""}`}>
+                      {!isEven && <ArrowRight className="h-4 w-4 transition-transform group-hover:-translate-x-1 lg:rotate-180 hidden lg:block" />}
+                      {step.label}
+                      <ArrowRight className={`h-4 w-4 transition-transform group-hover:translate-x-1 ${!isEven ? "lg:hidden" : ""}`} />
+                      {isEven && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 hidden lg:block" />}
                     </span>
                   </div>
                 </Link>

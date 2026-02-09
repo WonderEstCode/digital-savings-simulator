@@ -23,10 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${poppins.variable} font-sans antialiased`}>
+      <body className={`${poppins.variable} font-sans antialiased min-h-screen flex flex-col`}>
         <RecaptchaProvider>
           <Navbar />
-          <main>{children}</main>
+            <main className="flex-1">
+              {children}
+            </main>
           <Footer />
         </RecaptchaProvider>
       </body>

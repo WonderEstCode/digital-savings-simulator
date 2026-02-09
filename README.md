@@ -25,6 +25,43 @@ cd backend && npm install
 cd frontend && npm install
 ```
 
+## Variables de entorno
+
+Cada carpeta incluye un `.env.example` con las variables necesarias. Copia el archivo y renómbralo a `.env` (backend) o `.env.local` (frontend):
+
+```bash
+# Backend
+cp backend/.env.example backend/.env
+
+# Frontend
+cp frontend/.env.example frontend/.env.local
+```
+
+**Backend** (`backend/.env`):
+
+| Variable | Descripción | Valor por defecto |
+|---|---|---|
+| `PORT` | Puerto del servidor | `3001` |
+| `FRONTEND_URL` | URL del frontend (para CORS y revalidación) | `http://localhost:3000` |
+| `REVALIDATION_SECRET` | Secreto compartido para on-demand revalidation | `dev-secret` |
+
+**Frontend** (`frontend/.env.local`):
+
+| Variable | Descripción | Valor por defecto |
+|---|---|---|
+| `API_URL` | URL del backend | `http://localhost:3001/api` |
+| `REVALIDATION_SECRET` | Secreto compartido (debe coincidir con el backend) | `dev-secret` |
+| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Clave pública de reCAPTCHA v3 (opcional) | — |
+| `RECAPTCHA_SECRET_KEY` | Clave secreta de reCAPTCHA v3 (opcional) | — |
+
+### reCAPTCHA v3
+
+Las keys de reCAPTCHA son **opcionales**. Sin ellas, la app funciona en **modo simulado**: el formulario de onboarding muestra un badge de "modo simulado" y la verificación siempre pasa.
+
+Las keys de prueba ya están incluidas en el `.env.example` por facilidad, ya que es una app de demostración. Al copiar el archivo a `.env.local`, reCAPTCHA queda activo automáticamente.
+
+Para probar que la validación funciona de verdad, puedes borrar un carácter de alguna key, reiniciar el frontend, e intentar enviar el formulario de onboarding. Debería mostrar un error de verificación.
+
 ## Modo desarrollo
 
 ```bash
@@ -35,7 +72,7 @@ cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
-Abrir http://localhost:3000
+Abre http://localhost:3000
 
 ---
 
@@ -43,35 +80,47 @@ Abrir http://localhost:3000
 
 ### El problema
 
-Los datos de productos cambian poco, pero cuando cambian necesitan verse de inmediato. Hay tres formas de manejar esto:
+Los datos de productos cambian poco, pero cuando cambian necesitan verse rápido. Hay tres formas comunes de manejar esto:
 
 | Estrategia | Ventaja | Desventaja |
 |---|---|---|
-| **SSR** | Datos siempre actualizados | Cada visita le pega al servidor. No escala con tráfico alto |
-| **SSG** | Rendimiento máximo, cero carga al servidor | Hay que hacer rebuild completo para actualizar cualquier dato |
-| **ISR con tiempo fijo** | Buen rendimiento + datos relativamente frescos | Hay una ventana (ej. 60s) donde los datos pueden estar viejos |
+| **SSR** | Datos siempre actualizados | Cada visita ejecuta código en el servidor. No escala bien con tráfico alto |
+| **SSG** | Rendimiento máximo, cero carga al servidor | Necesita un rebuild completo para actualizar cualquier dato |
+| **ISR con tiempo fijo** | Buen rendimiento + datos relativamente frescos | Hay una ventana de tiempo donde los datos pueden estar desactualizados |
 
 ### La solución: ISR + On-Demand Revalidation
 
 Se toma lo mejor de cada enfoque:
 
-1. **Las páginas se generan como estáticas** en build time → se sirven rapidísimo
-2. **Se cachean por 1 hora** como red de seguridad (`revalidate: 3600`)
-3. **Cuando el backend modifica datos**, le avisa al frontend al instante para que invalide el caché
+1. **Las páginas se generan como estáticas** en build time, así se sirven muy rápido
+2. **Se cachean por 5 minutos** como red de seguridad (`revalidate: 300`)
+3. **Cuando el backend modifica datos**, le avisa al frontend al instante para que invalide el caché del servidor
 
 ```
 Un usuario visita /products
-  → Next.js le sirve la página estática (rápido, sin tocar el servidor)
+  → Next.js sirve la página estática (rápido, sin ejecutar código en el servidor)
 
 Un admin crea un producto vía API
   → El backend llama POST /api/revalidate al frontend
-    → Next.js invalida el caché de "products" inmediatamente
-      → El siguiente usuario ya ve el producto nuevo
+    → Next.js invalida el caché del servidor de "products" inmediatamente
+      → El siguiente usuario que entre ya ve el producto nuevo
 ```
+
+### Sobre el caché del navegador (Router Cache)
+
+Next.js maneja **dos cachés** independientes:
+
+1. **Caché del servidor (ISR)**: almacena las páginas estáticas generadas. Es lo que invalida el on-demand revalidation. Cuando un usuario nuevo entra o recarga la página, siempre recibe la versión más reciente.
+
+2. **Caché del navegador (Router Cache)**: cuando un usuario ya está navegando dentro de la app, Next.js cachea las páginas visitadas en el navegador durante unos minutos para que la navegación se sienta instantánea. Esto significa que si un admin crea un producto mientras un usuario ya está navegando, ese usuario podría necesitar recargar (F5) para ver el cambio.
+
+Esto es comportamiento estándar de Next.js y tiene sentido: el on-demand revalidation garantiza que **el servidor siempre tenga la versión actualizada**, y cada nueva visita o recarga la recibe. Para actualizaciones en tiempo real dentro de la misma sesión se usarían WebSockets o Server-Sent Events, que es otro patrón.
+
+En la práctica, cambios como un producto nuevo o un ajuste de tasa se validan en el backend y se programan en horarios específicos, así que el caché del navegador no lo considero como un problema real.
 
 ### ¿Por qué no algo más simple?
 
-Para 4 productos, un JSON local alcanza y sobra. Esta arquitectura está pensada para escalar:
+Para 4 productos, un JSON local es suficiente. Esta arquitectura está pensada para escalar:
 
 - **Si los productos crecen a cientos**, el backend se conecta a una base de datos sin tocar el frontend
 - **Si hay un panel de administración**, los cambios se ven al instante sin rebuild
@@ -94,7 +143,7 @@ cd backend
 npm run build && node dist/src/main.js
 ```
 
-Esperar a ver: `Backend running on http://localhost:3001/api`
+Espera a ver: `Backend running on http://localhost:3001/api`
 
 ```bash
 # Terminal 2: Frontend (build + start en modo producción)
@@ -102,11 +151,11 @@ cd frontend
 npm run build && npx next start
 ```
 
-Esperar a ver: `Ready in Xs`
+Espera a ver: `Ready in Xs`
 
 ### Paso 2 — Verificar el estado inicial
 
-Abrir http://localhost:3000/products en el navegador.
+Abre http://localhost:3000/products en el navegador.
 
 Se ven **4 productos** (generados estáticamente durante el build).
 
@@ -151,18 +200,18 @@ curl -X POST http://localhost:3001/api/products \
 
 ### Paso 5 — Verificar la actualización
 
-Recargar http://localhost:3000/products en el navegador.
+La forma más clara de verlo es abrir http://localhost:3000/products en **otra pestaña o ventana de incógnito**. El nuevo producto aparece sin haber hecho rebuild del frontend.
 
-Se ven **5 productos**. El "Ahorro Inversor" aparece al instante, sin haber hecho rebuild del frontend.
+Si quieres verificar desde la misma pestaña donde ya estabas, recarga la página (F5).
 
 ### ¿Qué pasó internamente?
 
 1. El `POST /api/products` creó el producto en el backend
 2. El backend llamó `POST http://localhost:3000/api/revalidate` con `{ tag: "products" }`
-3. Next.js invalidó todas las páginas que usan el tag `products`
-4. La siguiente visita regeneró la página con los datos actualizados
+3. Next.js invalidó el caché del servidor para todas las páginas que usan el tag `products`
+4. La siguiente visita o recarga generó la página con los datos actualizados
 
-Sin on-demand revalidation, el usuario tendría que esperar hasta **1 hora** (el `revalidate: 3600`) para ver el cambio.
+Sin on-demand revalidation, el usuario tendría que esperar hasta **5 minutos** (el `revalidate: 300`) para ver el cambio.
 
 ### Nota importante: los datos viven en memoria
 
@@ -170,7 +219,7 @@ Los archivos JSON del backend (`products.json`, `product-types.json`) **no se mo
 
 - Cuando el backend arranca, lee los JSON y los guarda en un array en memoria
 - Cuando haces un `curl POST`, el producto nuevo se agrega a ese array, no al archivo
-- Si reiniciás el backend, se pierden los productos creados (vuelve a los 4 originales)
+- Si reinicias el backend, se pierden los productos creados (vuelve a los 4 originales)
 
 Para ver los datos que el backend tiene en memoria en cualquier momento:
 
@@ -206,4 +255,4 @@ En una aplicación real se usaría una base de datos (PostgreSQL, MongoDB, etc.)
 | Frontend | Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS 4 |
 | Backend | NestJS 11, class-validator, ConfigModule |
 | Caching | ISR con cache tags + on-demand revalidation vía webhook |
-| Validación | reCAPTCHA v3 (modo simulación sin keys) |
+| Validación | reCAPTCHA v3 (real con keys, modo simulado sin ellas) |

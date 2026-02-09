@@ -19,21 +19,21 @@ export class ProductsService {
     return product;
   }
 
-  create(product: ProductDto): ProductDto {
+  async create(product: ProductDto): Promise<ProductDto> {
     const exists = this.products.find((p) => p.slug === product.slug);
     if (exists) throw new ConflictException(`Product "${product.slug}" already exists`);
 
     this.products.push(product);
-    this.triggerRevalidation();
+    await this.triggerRevalidation();
     return product;
   }
 
-  update(slug: string, partial: Partial<ProductDto>): ProductDto {
+  async update(slug: string, partial: Partial<ProductDto>): Promise<ProductDto> {
     const index = this.products.findIndex((p) => p.slug === slug);
     if (index === -1) throw new NotFoundException(`Product "${slug}" not found`);
 
     this.products[index] = { ...this.products[index], ...partial };
-    this.triggerRevalidation();
+    await this.triggerRevalidation();
     return this.products[index];
   }
 

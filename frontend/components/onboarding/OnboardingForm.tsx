@@ -80,6 +80,9 @@ export default function OnboardingForm({ products }: OnboardingFormProps) {
   }
 
   const getRecaptchaToken = useCallback(async (): Promise<string | null> => {
+    if (!hasRealRecaptcha) {
+      return "SIMULATED_TOKEN";
+    }
     if (executeRecaptcha) {
       try {
         return await executeRecaptcha("onboarding_submit");
@@ -87,7 +90,7 @@ export default function OnboardingForm({ products }: OnboardingFormProps) {
         return null;
       }
     }
-    return "SIMULATED_TOKEN";
+    return null;
   }, [executeRecaptcha]);
 
   async function handleSubmit(e: React.FormEvent) {
