@@ -1,13 +1,45 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const data: Record<string, unknown> = require('../../data/product-types.json');
+export interface ProductType {
+  label: string;
+  benefits: { title: string; description: string }[];
+}
+
+import data from '../../data/product-types.json';
 
 @Injectable()
 export class ProductTypesService {
-  private types: Record<string, unknown> = { ...data };
+  private types: Record<string, ProductType> = { ...data };
 
-  findAll(): Record<string, unknown> {
+  constructor(private config: ConfigService) {}
+
+  findAll(): Record<string, ProductType> {
     return this.types;
+  }
+
+  create(key: string, type: ProductType): ProductType {
+    if (this.types[key]) throw new ConflictException(`Type "${key}" already exists`);
+
+    this.types[key] = type;
+    this.triggerRevalidation();
+    return type;
+  }
+
+  private async triggerRevalidation() {
+    const frontendUrl = this.config.get<string>('FRONTEND_URL');
+    const secret = this.config.get<string>('REVALIDATION_SECRET');
+
+    if (!frontendUrl || !secret) return;
+
+    try {
+      await fetch(`${frontendUrl}/api/revalidate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret, tag: 'product-types' }),
+      });
+    } catch {
+      console.warn('Could not trigger frontend revalidation');
+    }
   }
 }

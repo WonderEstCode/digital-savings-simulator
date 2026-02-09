@@ -1,8 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ProductDto } from './dto/product.dto';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const data: ProductDto[] = require('../../data/products.json');
+import data from '../../data/products.json';
 
 @Injectable()
 export class ProductsService {
@@ -17,6 +16,15 @@ export class ProductsService {
   findBySlug(slug: string): ProductDto {
     const product = this.products.find((p) => p.slug === slug);
     if (!product) throw new NotFoundException(`Product "${slug}" not found`);
+    return product;
+  }
+
+  create(product: ProductDto): ProductDto {
+    const exists = this.products.find((p) => p.slug === product.slug);
+    if (exists) throw new ConflictException(`Product "${product.slug}" already exists`);
+
+    this.products.push(product);
+    this.triggerRevalidation();
     return product;
   }
 
