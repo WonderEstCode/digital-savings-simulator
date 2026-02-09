@@ -1,0 +1,29 @@
+{
+  "goal": {
+    "label": "Ahorro por metas",
+    "benefits": [
+      { "title": "Aportes flexibles", "description": "Ahorra a tu ritmo, sin montos fijos obligatorios cada mes." },
+      { "title": "Retiros parciales", "description": "Accede a tu dinero cuando lo necesites, con liquidez media." },
+      { "title": "Sin comisiones ocultas", "description": "Transparencia total en tasas y condiciones de tu cuenta." },
+      { "title": "Seguimiento de metas", "description": "Visualiza tu progreso hacia la meta que te propongas." }
+    ]
+  },
+  "housing": {
+    "label": "Vivienda",
+    "benefits": [
+      { "title": "Mayor rentabilidad", "description": "Tasa preferencial diseñada para ahorro a largo plazo." },
+      { "title": "Subsidio de vivienda", "description": "Tu ahorro puede ser base para acceder a subsidios de vivienda." },
+      { "title": "Disciplina financiera", "description": "Estructura tu ahorro con aportes constantes cada mes." },
+      { "title": "Asesoría personalizada", "description": "Acompañamiento en tu proceso de compra de vivienda." }
+    ]
+  },
+  "programmed": {
+    "label": "Ahorro programado",
+    "benefits": [
+      { "title": "Aportes automáticos", "description": "Programa débitos mensuales y ahorra sin pensarlo." },
+      { "title": "Sin monto mínimo", "description": "Comienza con cualquier cantidad y crece a tu ritmo." },
+      { "title": "Constancia premiada", "description": "Entre más constante seas, mejores condiciones obtienes." },
+      { "title": "Fácil de gestionar", "description": "Administra todo desde la comodidad de tu dispositivo." }
+    ]
+  }
+}
